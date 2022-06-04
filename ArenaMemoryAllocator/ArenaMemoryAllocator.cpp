@@ -5,6 +5,7 @@ void HeapStatus(ShailoHeap& heapObject);
 
 int main()
 {
+    //Testing heap without free------------------------------------------------------------------------------------------------------
     //Build heap
     int max = 4000;
     ShailoHeap heapObject = ShailoHeap(max*sizeof(int) + sizeof(size_t));
@@ -29,6 +30,27 @@ int main()
     }
 
     HeapStatus(heapObject);
+
+    //Testing free------------------------------------------------------------------------------------------------------------------
+    //Create heap and load with three integers
+    ShailoHeap freeTestHeap = ShailoHeap(3 * PaddedMemoryAllocation(sizeof(int)));
+    int* firstInteger = (int*)freeTestHeap.ShailoHeapAlloc(sizeof(int));
+    *firstInteger = 1;
+    int* secondInteger = (int*)freeTestHeap.ShailoHeapAlloc(sizeof(int));
+    *secondInteger = 2;
+    int* thirdInteger = (int*)freeTestHeap.ShailoHeapAlloc(sizeof(int));
+    *thirdInteger = 3;
+    HeapStatus(freeTestHeap);
+
+    //Test if heap can handle freeing and merging an object between two free spaces consecutively (SUCCESS)
+    //Free first and third integers to leave a space in between
+    freeTestHeap.ShailoHeapFree(firstInteger);
+    freeTestHeap.ShailoHeapFree(thirdInteger);
+
+    //Free second integer to test if it merges it in the middle and thus all as one free space
+    freeTestHeap.ShailoHeapFree(secondInteger);
+    
+
 }
 
 void HeapStatus(ShailoHeap& heapObject)

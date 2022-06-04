@@ -78,9 +78,68 @@ void* ShailoHeap::ShailoHeapAlloc(size_t blockSize)
 void ShailoHeap::ShailoHeapFree(void* blockPointer)
 {
 	//Get the size of the block to be freed
-	//size_t blockSize = ShailoHeapSize(blockPointer);
+	size_t blockSize = ShailoHeapSize(blockPointer);
 
-	//
+	//Check if the blockSize is invalid and terminate the program if so. Invalid means that the blockSize is 0 or is larger than the amount of bytes allocated
+	size_t bytesAllocated = MaxHeapCapacity - FreeHeapCapacity;
+	if (blockSize == 0 || blockSize > bytesAllocated)
+	{
+		std::cout << "Error in free(): " << blockSize << " bytes\n";
+		exit(1);
+	}
+
+	//Update free heap capacity
+	FreeHeapCapacity += PaddedMemoryAllocation(blockSize);
+
+	//Create free node for given block
+	char* charBlockPointer = ((char*)blockPointer) - sizeof(size_t); //Adjust for blockSize metadata
+	FreeNode blockToBeFreed = FreeNode(charBlockPointer, PaddedMemoryAllocation(blockSize));
+
+	//Cycle through every free node in the free list and try to merge them with the blockToBeFreed
+	size_t mergedBlockIndex = FreeSpaceList.size();
+	size_t priorSize = 0;
+	size_t afterSize = 0;
+	for (size_t index = 0; index < FreeSpaceList.size(); index++)
+	{
+		priorSize = FreeSpaceList[index].SizeOfFreeSpace();
+		FreeSpaceList[index] = FreeSpaceList[index] + blockToBeFreed;
+		afterSize = FreeSpaceList[index].SizeOfFreeSpace();
+
+		if (priorSize != afterSize)
+		{
+			mergedBlockIndex = index;
+			break;
+		}
+	}
+
+	//If the blockToBeFreed was not merged into at least one free space, then it must be a disjoint free space and thus be appended to the list
+	if (mergedBlockIndex == FreeSpaceList.size())
+	{
+		FreeSpaceList.emplace_back(blockToBeFreed);
+		return;
+	}
+
+	//If the block was merged into one of the free spaces, it must be checked if that space can be merged into another.
+	//If this happens, it means that blockToBeFreed is in between two free spaces consecutively
+	FreeNode currentSpace = FreeSpaceList[mergedBlockIndex];
+	FreeSpaceList.erase(FreeSpaceList.begin() + mergedBlockIndex);
+	priorSize = 0;
+	afterSize = 0;
+	for (size_t index = mergedBlockIndex; index < FreeSpaceList.size(); index++)
+	{
+		priorSize = FreeSpaceList[index].SizeOfFreeSpace();
+		FreeSpaceList[index] = FreeSpaceList[index] + currentSpace;
+		afterSize = FreeSpaceList[index].SizeOfFreeSpace();
+
+		//Second merge complete
+		if (priorSize != afterSize)
+		{
+			return;
+		}
+	}
+
+	//If the second merge couldn't be complete, put the removed space back in
+	FreeSpaceList.emplace_back(currentSpace);
 }
 
 size_t ShailoHeap::ShailoHeapSize(void* blockPointer) const
