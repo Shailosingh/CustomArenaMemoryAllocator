@@ -50,7 +50,7 @@ int main()
     //Free second integer to test if it merges it in the middle and thus all as one free space
     freeTestHeap.ShailoHeapFree(secondInteger);
     
-
+    HeapStatus(freeTestHeap);
 }
 
 void HeapStatus(ShailoHeap& heapObject)
