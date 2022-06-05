@@ -5,10 +5,10 @@ void HeapStatus(ShailoHeap& heapObject);
 
 int main()
 {
-    //Testing heap without free------------------------------------------------------------------------------------------------------
+    std::cout << "Testing basic heap allocation without free------------------------------------------------------------------------------------------\n";
     //Build heap
     int max = 4000;
-    ShailoHeap heapObject = ShailoHeap(max*sizeof(int) + sizeof(size_t));
+    ShailoHeap heapObject = ShailoHeap(PaddedMemoryAllocation(max*sizeof(int)));
     HeapStatus(heapObject);
 
     //Insert 2 timestables into the heap
@@ -30,8 +30,9 @@ int main()
     }
 
     HeapStatus(heapObject);
+    heapObject.ShailoHeapDestroy();
 
-    //Testing free------------------------------------------------------------------------------------------------------------------
+    std::cout << "Testing coalescing------------------------------------------------------------------------------------------------------------------\n";
     //Create heap and load with three integers
     ShailoHeap freeTestHeap = ShailoHeap(3 * PaddedMemoryAllocation(sizeof(int)));
     int* firstInteger = (int*)freeTestHeap.ShailoHeapAlloc(sizeof(int));
@@ -51,6 +52,30 @@ int main()
     freeTestHeap.ShailoHeapFree(secondInteger);
     
     HeapStatus(freeTestHeap);
+    freeTestHeap.ShailoHeapDestroy();
+
+    std::cout << "Testing reuse of freed blocks-------------------------------------------------------------------------------------------------------\n";
+    //Create heap and load with three integers
+    ShailoHeap reuseTestHeap = ShailoHeap(3*PaddedMemoryAllocation(sizeof(int)));
+    firstInteger = (int*)reuseTestHeap.ShailoHeapAlloc(sizeof(int));
+    *firstInteger = 1;
+    secondInteger = (int*)reuseTestHeap.ShailoHeapAlloc(sizeof(int));
+    *secondInteger = 2;
+    thirdInteger = (int*)reuseTestHeap.ShailoHeapAlloc(sizeof(int));
+    *thirdInteger = 3;
+    HeapStatus(reuseTestHeap);
+
+    //Free the middle integer and ensure this space can be reused
+    reuseTestHeap.ShailoHeapFree(secondInteger);
+
+    //Try to put an array of chars in the middle space that was just freed
+    char* characterFill = (char*)reuseTestHeap.ShailoHeapAlloc(sizeof(int));
+    for (size_t index = 0; index < sizeof(int); index++)
+    {
+        characterFill[index] = 'A';
+    }
+    HeapStatus(reuseTestHeap);
+    reuseTestHeap.ShailoHeapDestroy();
 }
 
 void HeapStatus(ShailoHeap& heapObject)

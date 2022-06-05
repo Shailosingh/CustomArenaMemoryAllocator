@@ -22,7 +22,7 @@ ShailoHeap::ShailoHeap(size_t maxHeapCapacity)
 }
 
 ShailoHeap::~ShailoHeap()
-{
+{	
 	ShailoHeapDestroy();
 }
 
@@ -161,15 +161,18 @@ size_t ShailoHeap::ShailoHeapMaxCapacity() const
 
 void ShailoHeap::ShailoHeapDestroy()
 {
-	//Set the capacities to 0, to disable the heap
-	MaxHeapCapacity = 0;
-	FreeHeapCapacity = 0;
+	if (MaxHeapCapacity != 0)
+	{
+		//Set the capacities to 0, to disable the heap
+		MaxHeapCapacity = 0;
+		FreeHeapCapacity = 0;
 
-	//Free all memory allocated in the heap
-	free(InitialAllocatedHeapSpacePointer);
+		//Free all memory allocated in the heap
+		free(InitialAllocatedHeapSpacePointer);
 
-	//Destroy free space list
-	FreeSpaceList.clear();
+		//Destroy free space list
+		FreeSpaceList.clear();
+	}
 }
 
 //Helper Functions-------------------------------------------------------------------------------------------------------------------
