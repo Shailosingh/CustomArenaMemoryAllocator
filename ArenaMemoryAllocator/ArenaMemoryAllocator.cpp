@@ -5,7 +5,7 @@ void HeapStatus(ShailoHeap& heapObject);
 
 int main()
 {
-    std::cout << "Testing basic heap allocation without free------------------------------------------------------------------------------------------\n";
+    std::cout << "Testing basic heap allocation without free------------------------------------------------------------------------------------------\n"; //SUCCESS
     //Build heap
     int max = 4000;
     ShailoHeap heapObject = ShailoHeap(PaddedMemoryAllocation(max*sizeof(int)));
@@ -32,7 +32,7 @@ int main()
     HeapStatus(heapObject);
     heapObject.ShailoHeapDestroy();
 
-    std::cout << "Testing coalescing------------------------------------------------------------------------------------------------------------------\n";
+    std::cout << "Testing coalescing------------------------------------------------------------------------------------------------------------------\n"; //SUCCESS
     //Create heap and load with three integers
     ShailoHeap freeTestHeap = ShailoHeap(3 * PaddedMemoryAllocation(sizeof(int)));
     int* firstInteger = (int*)freeTestHeap.ShailoHeapAlloc(sizeof(int));
@@ -54,7 +54,7 @@ int main()
     HeapStatus(freeTestHeap);
     freeTestHeap.ShailoHeapDestroy();
 
-    std::cout << "Testing reuse of freed blocks-------------------------------------------------------------------------------------------------------\n";
+    std::cout << "Testing reuse of freed blocks-------------------------------------------------------------------------------------------------------\n"; //SUCCESS
     //Create heap and load with three integers
     ShailoHeap reuseTestHeap = ShailoHeap(3*PaddedMemoryAllocation(sizeof(int)));
     firstInteger = (int*)reuseTestHeap.ShailoHeapAlloc(sizeof(int));
@@ -76,6 +76,52 @@ int main()
     }
     HeapStatus(reuseTestHeap);
     reuseTestHeap.ShailoHeapDestroy();
+
+    std::cout << "Testing 'Best-Fit' Allocation-------------------------------------------------------------------------------------------------------\n"; //SUCCESS
+    //Create heap with 100 chars
+    ShailoHeap bestFitTestHeap = ShailoHeap(100*PaddedMemoryAllocation(sizeof(char)));
+    char* charPointers[100];
+    for (size_t index = 0; index < 100; index++)
+    {
+        charPointers[index] = (char*)bestFitTestHeap.ShailoHeapAlloc(sizeof(char));
+        *charPointers[index] = 'A';
+    }
+
+    //Remove characters [1,30], [35,46], [51,90] (freespaces of 30*(sizeof(size_t)+sizeof(char))=270, 12*(sizeof(size_t)+sizeof(char))=108, 40*(sizeof(size_t)+sizeof(char))=360)
+    for (size_t index = 1; index <= 30; index++)
+    {
+        bestFitTestHeap.ShailoHeapFree(charPointers[index]);
+    }
+    for (size_t index = 35; index <= 46; index++)
+    {
+        bestFitTestHeap.ShailoHeapFree(charPointers[index]);
+    }
+    for (size_t index = 51; index <= 90; index++)
+    {
+        bestFitTestHeap.ShailoHeapFree(charPointers[index]);
+    }
+
+    //Insert 12 chars one by one into the heap. Should all go into [35,46] (108) space
+    char* tempChar;
+    for (size_t index = 0; index < 12; index++)
+    {
+        tempChar = (char*)bestFitTestHeap.ShailoHeapAlloc(sizeof(char));
+        *tempChar = 'a';
+    }
+
+    //Insert 30 characters which should go into [1,30] (270) space
+    for (size_t index = 0; index < 30; index++)
+    {
+        tempChar = (char*)bestFitTestHeap.ShailoHeapAlloc(sizeof(char));
+        *tempChar = 'a';
+    }
+
+    //Insert 50 characters which should go into [51,90] (360) and totally fill the heap
+    for (size_t index = 0; index < 40; index++)
+    {
+        tempChar = (char*)bestFitTestHeap.ShailoHeapAlloc(sizeof(char));
+        *tempChar = 'a';
+    }
 }
 
 void HeapStatus(ShailoHeap& heapObject)
