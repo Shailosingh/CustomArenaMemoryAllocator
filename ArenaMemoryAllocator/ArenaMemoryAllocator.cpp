@@ -122,6 +122,11 @@ int main()
         tempChar = (char*)bestFitTestHeap.ShailoHeapAlloc(sizeof(char));
         *tempChar = 'a';
     }
+
+    std::cout << "Testing allocation of single integer------------------------------------------------------------------------------------------------\n"; //SUCCESS
+    ShailoHeap heap = ShailoHeap(1000);
+    int* integerPointer = (int*)heap.ShailoHeapAlloc(sizeof(int));
+    *integerPointer = 255;
 }
 
 void HeapStatus(ShailoHeap& heapObject)
